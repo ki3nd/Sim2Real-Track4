@@ -21,12 +21,14 @@ class LHPDataset(Dataset):
         return len(self.ann)
 
     def __getitem__(self, index):
-        ann = self.ann[index]
-        image_path = os.path.join(self.image_root, ann["image"])
-        try:
-            image = Image.open(image_path).convert("RGB")
-        except Exception:
-            return self.__getitem__(random.randint(0, len(self.ann) - 1))
-        image, _view = self.transform(image)
-        caption = pre_caption(ann["caption"], self.max_words, self.eda, self.eda_p)
-        return image, caption, ann["image"]
+        for _ in range(len(self.ann)):
+            ann = self.ann[index]
+            image_path = os.path.join(self.image_root, ann["image"])
+            try:
+                image = Image.open(image_path).convert("RGB")
+                image, _view = self.transform(image)
+                caption = pre_caption(ann["caption"], self.max_words, self.eda, self.eda_p)
+                return image, caption, ann["image"]
+            except Exception:
+                index = random.randint(0, len(self.ann) - 1)
+        raise RuntimeError("LHPDataset: no loadable images found in dataset")
