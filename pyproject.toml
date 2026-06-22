@@ -1,0 +1,13 @@
+[project]
+name = "sim2real-track4"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "nltk>=3.9.4",
+    "opencv-python>=4.13.0.92",
+    "prettytable>=3.17.0",
+    "ruamel-yaml>=0.19.1",
+    "scipy>=1.18.0",
+    "timm>=1.0.27",
+    "transformers>=5.12.1",
+]
