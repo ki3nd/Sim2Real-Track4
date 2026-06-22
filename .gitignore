@@ -7,3 +7,13 @@ env/
 .venv/
 .env/
 ENV/
+
+# Model weights / checkpoints
+*.pt
+*.pth
+*.th
+*.ckpt
+*.safetensors
+*.spm
+checkpoint/
+output/
