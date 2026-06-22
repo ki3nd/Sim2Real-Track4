@@ -66,14 +66,19 @@ Reused from CMP (import, not copy): `dataset/utils.py` (`pre_caption`, `read_jso
 **Interfaces:**
 - Produces: `lhp.beit3_loader.build_beit3_retrieval(drop_path_rate=0.1) -> nn.Module`, `lhp.beit3_loader.load_pretrained(model, ckpt_path)`, and re-exports `XLMRobertaTokenizer` usage helpers via beit3 path.
 
-- [ ] **Step 1: Copy the two verbatim BeiT-3 files**
+- [ ] **Step 1: Copy the two verbatim BeiT-3 files + make `lhp/beit3` a package**
 
 ```bash
 mkdir -p lhp/beit3 lhp/tests
-touch lhp/__init__.py lhp/tests/__init__.py
+touch lhp/__init__.py lhp/tests/__init__.py lhp/beit3/__init__.py
 cp /home/pc1175/Code/open-sources/unilm/beit3/modeling_utils.py    lhp/beit3/modeling_utils.py
 cp /home/pc1175/Code/open-sources/unilm/beit3/modeling_finetune.py lhp/beit3/modeling_finetune.py
 ```
+
+`lhp/beit3/` is a real Python package (note the `__init__.py`). This avoids
+`sys.path` injection and the resulting `import utils` name collision with the
+CMP repo-root `utils.py` (whichever loaded first would otherwise win
+`sys.modules['utils']` and break the other component).
 
 - [ ] **Step 2: Create the trimmed `lhp/beit3/utils.py`**
 
@@ -99,19 +104,29 @@ Then copy these functions/classes verbatim (exact upstream line ranges):
 
 (These functions reference only `torch`, `dist`, `nn`, `F` — verified.)
 
-- [ ] **Step 3: Create `lhp/beit3_loader.py`**
+- [ ] **Step 3: Patch the vendored `modeling_finetune.py` to package-relative imports**
+
+The upstream file uses flat imports that assume its dir is on `sys.path`.
+Change exactly these two lines so they resolve within the `lhp.beit3` package
+(this is the ONLY edit to the vendored files):
 
 ```python
-import os
-import sys
+# BEFORE (upstream)
+import utils
+from modeling_utils import BEiT3Wrapper, _get_base_config, _get_large_config
 
-_BEIT3_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "beit3")
-if _BEIT3_DIR not in sys.path:
-    # prepend so vendored `import utils` / `from modeling_utils import ...` resolve here
-    sys.path.insert(0, _BEIT3_DIR)
+# AFTER (package-relative)
+from . import utils
+from .modeling_utils import BEiT3Wrapper, _get_base_config, _get_large_config
+```
 
-from modeling_finetune import beit3_base_patch16_384_retrieval  # noqa: E402
-import utils as beit3_utils  # noqa: E402  (trimmed vendored utils)
+`modeling_utils.py` needs no change (it imports only `torchscale` and `timm`).
+
+- [ ] **Step 4: Create `lhp/beit3_loader.py`**
+
+```python
+from lhp.beit3.modeling_finetune import beit3_base_patch16_384_retrieval
+from lhp.beit3 import utils as beit3_utils
 
 
 def build_beit3_retrieval(drop_path_rate: float = 0.1):
@@ -127,7 +142,7 @@ def load_pretrained(model, ckpt_path: str):
     return model
 ```
 
-- [ ] **Step 4: Write the failing test**
+- [ ] **Step 5: Write the failing test**
 
 ```python
 # lhp/tests/test_import_model.py
@@ -148,17 +163,17 @@ def test_trimmed_utils_has_no_broken_imports():
     assert hasattr(beit3_utils, "ClipLoss")
 ```
 
-- [ ] **Step 5: Run test to verify it fails**
+- [ ] **Step 6: Run test to verify it fails**
 
 Run: `.venv/bin/python -m pytest lhp/tests/test_import_model.py -v`
-Expected: FAIL/ERROR initially if any vendored import is wrong (e.g. ModuleNotFoundError). Fix the trimmed `utils.py` until imports resolve.
+Expected: FAIL/ERROR initially if any vendored import is wrong (e.g. ModuleNotFoundError). Fix the trimmed `utils.py` / relative-import patch until imports resolve.
 
-- [ ] **Step 6: Run test to verify it passes**
+- [ ] **Step 7: Run test to verify it passes**
 
 Run: `.venv/bin/python -m pytest lhp/tests/test_import_model.py -v`
 Expected: 2 passed.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add lhp/__init__.py lhp/beit3/ lhp/beit3_loader.py lhp/tests/
