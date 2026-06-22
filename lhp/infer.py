@@ -1,6 +1,3 @@
-import torch
-
-
 def similarity(img_feats, txt_feats):
     """Cosine similarity (features are already L2-normalized by the model heads).
     Returns [N_txt, N_img]."""

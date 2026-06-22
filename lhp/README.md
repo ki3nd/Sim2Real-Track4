@@ -109,7 +109,9 @@ with torch.no_grad():
 ### Compute Similarity
 
 ```python
-similarity = torch.matmul(img_embed, txt_embed.t())  # (1, 1) in this example
+from lhp.infer import similarity
+
+sim = similarity(img_embed, txt_embed)  # [N_txt, N_img] — text-to-image orientation
 ```
 
 ## VRAM Guidance

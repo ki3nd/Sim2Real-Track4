@@ -26,7 +26,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="lhp/config.yaml")
     args = parser.parse_args()
-    cfg = YAML(typ="safe").load(open(args.config))
+    with open(args.config) as f:
+        cfg = YAML(typ="safe").load(f)
 
     local_rank, rank, world = setup_ddp()          # BEFORE building model (ClipLoss rank/world)
     device = torch.device("cuda", local_rank)
