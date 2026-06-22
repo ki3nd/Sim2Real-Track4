@@ -1,5 +1,6 @@
 import random
 from torchvision import transforms
+from torchvision.transforms import InterpolationMode
 from timm.data.constants import IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from timm.data.transforms import RandomResizedCropAndInterpolation
 
@@ -14,7 +15,7 @@ class LHPTransform:
             RandomResizedCropAndInterpolation(resolution, scale=crop_scale, interpolation="bicubic"),
             transforms.RandomHorizontalFlip(),
         ])
-        self._global = transforms.Resize((resolution, resolution), interpolation=3)  # BICUBIC
+        self._global = transforms.Resize((resolution, resolution), interpolation=InterpolationMode.BICUBIC)
         self._finalize = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=IMAGENET_INCEPTION_MEAN, std=IMAGENET_INCEPTION_STD),
