@@ -97,7 +97,7 @@ from lhp.tokenization import tokenize_caption
 import torch
 
 tokenizer = XLMRobertaTokenizer("checkpoint/beit3.spm")
-text_ids, padding_mask = tokenize_caption(tokenizer, "person walking", max_tokens=64)
+text_ids, padding_mask = tokenize_caption(tokenizer, "person walking", max_len=64)
 
 with torch.no_grad():
     txt_embed = model.encode_text(
