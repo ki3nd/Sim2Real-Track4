@@ -66,8 +66,8 @@ Edit `lhp/config.yaml` to adjust:
 | `weight_decay` | AdamW weight decay (default: 0.01) |
 | `drop_path_rate` | DropPath rate in BeiT-3 (default: 0.1) |
 | `eda` | Enable EDA augmentation (default: false) |
-| `train_file` | List of JSON annotation files |
-| `image_root` | Root directory for images |
+| `data_root` | Dataset root — prefixes both annotation files and image paths (move the dataset by changing only this) |
+| `train_file` | JSON annotation files, **relative to `data_root`** (e.g. `annotation/train/attr_0.json`) |
 | `beit3_ckpt` | Path to BeiT-3 checkpoint |
 | `spm_model` | Path to BeiT-3 tokenizer model |
 | `output_dir` | Checkpoint output directory |
