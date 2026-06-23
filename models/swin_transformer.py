@@ -12,7 +12,10 @@ from scipy.interpolate import RectBivariateSpline
 import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
-from timm.layers import DropPath, to_2tuple, trunc_normal_
+try:
+    from timm.layers import DropPath, to_2tuple, trunc_normal_          # timm >= 0.6
+except ImportError:
+    from timm.models.layers import DropPath, to_2tuple, trunc_normal_   # timm 0.4.12 (BeiT-3 pin)
 
 
 class Mlp(nn.Module):
