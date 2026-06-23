@@ -46,7 +46,10 @@ def main():
                         num_workers=4, pin_memory=True, drop_last=True)
 
     model = LHPRetriever(ckpt_path=cfg["beit3_ckpt"], drop_path_rate=cfg["drop_path_rate"]).to(device)
-    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank])
+    # BeiT-3's vision_embed.mask_token is unused in the retrieval forward (it is a
+    # masked-image-pretraining param), so plain DDP would error on its missing grad.
+    model = torch.nn.parallel.DistributedDataParallel(
+        model, device_ids=[local_rank], find_unused_parameters=True)
 
     optimizer = AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
     steps = math.ceil(len(dataset) / cfg["batch_size"]) * cfg["epochs"]
