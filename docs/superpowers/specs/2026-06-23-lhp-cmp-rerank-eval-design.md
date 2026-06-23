@@ -37,8 +37,14 @@ score = evaluation_itm(cmp_model, device, cmp_cfg, args(distributed=False),
 mAP(score, test_ds.g_pids, test_ds.q_pids)   # R@1/5/10, mAP, mINP
 ```
 
-## 5. Alignment (the #1 correctness risk)
-`lhp_sims` indices must match CMP's `image_embeds`/`text_embeds`/`g_pids`/`q_pids`. Guaranteed by using **one** `search_test_dataset` instance as the order source: CMP encodes via its loader; LHP encodes **the same** `test_ds.image[]` (gallery order) and `test_ds.text[]` (query order) with its own preprocessing. Same iteration order ⇒ `lhp_sims[query i, gallery j]` aligns with `image_embeds[j]`, `text_embeds[i]`, `g_pids[j]`, `q_pids[i]`.
+## 5. Alignment (index-only; feature dims are independent)
+Stage-1 and stage-2 share **only the integer index** (which image/query position) — never feature vectors. LHP feats (768-d) live in LHP space; CMP embeds (1024-d) live in CMP space; `lhp_sims` is computed entirely in LHP space, the rerank entirely in CMP space. So the differing input/embedding dims are irrelevant to correctness.
+
+The only real requirement is **identical ordering**: `lhp_sims[i][j]` index `j` must be the same image as `image_embeds[j]`/`g_pids[j]`, and `i` the same caption as `text_embeds[i]`/`q_pids[i]`. This holds automatically because:
+1. **No shuffle** — verified: `create_loader` sets `shuffle=False` for test; `evaluation_itc` builds `image_embeds` (loader order) and `text_embeds` (`dataset.text` order) in dataset order. LHP's encode loaders must likewise use `shuffle=False`.
+2. **Same caption-flatten** — both iterate per image then per caption (`search_test_dataset` and `lhp.eval.build_test_index` are identical here).
+
+Simplest way to guarantee both: drive LHP's encode from the **same** `search_test_dataset` instance's `test_ds.image[]`/`test_ds.text[]`. (Two separate datasets over the same `test_file` also align as long as 1+2 hold.) `lhp_sims` shape = `[N_query, N_gallery]` = `[len(test_ds.text), len(test_ds.image)]` (rows=queries, `.topk` over gallery dim).
 
 - `lhp_sims` shape = `[N_query, N_gallery]` = `[len(test_ds.text), len(test_ds.image)]` (what `evaluation_itm` expects: rows=queries, `.topk` over gallery dim).
 - LHP tokenizes `test_ds.text[i]` (already `pre_caption`'d by CMP) with spm — harmless.
