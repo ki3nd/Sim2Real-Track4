@@ -24,6 +24,7 @@ class LHPDataset(Dataset):
         for _ in range(len(self.ann)):
             ann = self.ann[index]
             image_path = os.path.join(self.image_root, ann["image"])
+            image_path = image_path.replace(".jpg", ".webp")
             try:
                 image = Image.open(image_path).convert("RGB")
                 image, _view = self.transform(image)
