@@ -1,6 +1,6 @@
 import torch
 import pytest
-from lhp.rerank_eval import eval_args, assert_aligned
+from lhp.rerank_eval import eval_args, assert_aligned, main
 from lhp.infer import similarity
 
 
@@ -20,3 +20,7 @@ def test_similarity_is_query_by_gallery():
     txt = torch.randn(3, 8)           # 3 queries
     s = similarity(img, txt)          # txt @ img.T
     assert tuple(s.shape) == (3, 5)   # [N_query, N_gallery]
+
+
+def test_main_entrypoint_exists():
+    assert callable(main)
