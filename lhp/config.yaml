@@ -75,6 +75,8 @@ train_file:
   - 'annotation/train/imgs_72.json'
   - 'annotation/train/imgs_73.json'
   - 'annotation/train/imgs_74.json'
+test_file: 'annotation/test/attr.json'
+batch_size_eval: 64
 
 resolution: 384
 crop_scale: [0.5, 0.8]
