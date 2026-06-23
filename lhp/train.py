@@ -35,7 +35,9 @@ def main():
 
     tokenizer = XLMRobertaTokenizer(cfg["spm_model"])
     transform = LHPTransform(cfg["resolution"], tuple(cfg["crop_scale"]), cfg["local_prob"])
-    dataset = LHPDataset(cfg["train_file"], cfg["image_root"], transform,
+    data_root = cfg["data_root"]
+    ann_files = [os.path.join(data_root, f) for f in cfg["train_file"]]
+    dataset = LHPDataset(ann_files, data_root, transform,
                          max_words=cfg["max_words"], eda=cfg["eda"], eda_p=cfg["eda_p"])
 
     sampler = DistributedSampler(dataset, num_replicas=world, rank=rank, shuffle=True)
