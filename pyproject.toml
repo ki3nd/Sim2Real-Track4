@@ -3,13 +3,34 @@ name = "sim2real-track4"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "blobfile>=3.1.0",
+    "einops>=0.8.2",
+    "ftfy>=6.3.1",
+    "mypy>=2.1.0",
     "nltk>=3.9.4",
+    "numpy>=2.4.4",
     "opencv-python>=4.13.0.92",
-    "prettytable>=3.17.0",
+    "pillow>=12.2.0",
+    "prettytable>=3.18.0",
+    "pyarrow>=24.0.0",
+    "pycocoevalcap>=1.2",
+    "pycocotools>=2.0.11",
+    "pytest>=9.1.1",
+    "requests>=2.28.1",
     "ruamel-yaml>=0.19.1",
     "scipy>=1.18.0",
-    "tensorflow>=2.21.0",
+    "sentencepiece>=0.2.1",
+    "tensorboardx>=2.6.5",
     "timm==0.4.12",
+    "torch>=2.5.1",
+    "torchaudio>=2.5.1",
     "torchscale==0.2.0",
-    "transformers>=5.12.1",
+    "torchvision>=0.20.1",
+    "transformers==4.46.3",
 ]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu122"
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu121"
