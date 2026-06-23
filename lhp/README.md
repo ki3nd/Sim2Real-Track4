@@ -49,6 +49,27 @@ Replace `--nproc_per_node=2` with your number of GPUs and `CUDA_VISIBLE_DEVICES`
 - `sampler.set_epoch(epoch)` ensures different data shuffling each epoch
 - Default batch size is 184 (configured in `lhp/config.yaml`); see [VRAM Guidance](#vram-guidance) if you encounter OOM
 
+## Evaluation (PAB test)
+
+Score the dual-encoder retriever on the PAB test set (R@1/R@5/R@10, mAP, mINP), reusing CMP's `eval.mAP`. Single GPU, no DDP, no cross-encoder rerank — stage-1 cosine retrieval only. Run once per checkpoint and compare.
+
+```bash
+# baseline: zero-shot BeiT-3 COCO checkpoint (not fine-tuned on PAB)
+.venv/bin/python -m lhp.eval --config lhp/config.yaml --kind beit3 \
+    --checkpoint checkpoint/beit3_base_patch16_384_coco_retrieval.pth
+
+# after LHP fine-tuning
+.venv/bin/python -m lhp.eval --config lhp/config.yaml --kind lhp \
+    --checkpoint output/lhp/lhp_epoch2.pth
+```
+
+The R@1 / mAP delta between the two runs is the LHP improvement.
+
+- `--kind beit3`: load a raw `BEiT3ForRetrieval` checkpoint (the COCO `.pth`).
+- `--kind lhp`: load a trained `lhp_epoch*.pth` (`{"model": ...}` wrapper checkpoint).
+- Test set: `test_file` in `lhp/config.yaml` (relative to `data_root`), CMP format — each record `{image, image_id, caption: [list]}`; match query↔gallery by `image_id`. Test images resolve as `data_root + ann["image"]`.
+- Eval uses a deterministic global-only view (no LHP local crop).
+
 ## Configuration
 
 Edit `lhp/config.yaml` to adjust:
@@ -67,7 +88,9 @@ Edit `lhp/config.yaml` to adjust:
 | `drop_path_rate` | DropPath rate in BeiT-3 (default: 0.1) |
 | `eda` | Enable EDA augmentation (default: false) |
 | `data_root` | Dataset root — prefixes both annotation files and image paths (move the dataset by changing only this) |
-| `train_file` | JSON annotation files, **relative to `data_root`** (e.g. `annotation/train/attr_0.json`) |
+| `train_file` | JSON annotation files, **relative to `data_root`** (e.g. `annotation/train/imgs_0.json`) |
+| `test_file` | Test annotation, relative to `data_root` (e.g. `annotation/test/attr.json`) — used by `lhp.eval` |
+| `batch_size_eval` | Batch size for evaluation encoding (default: 64) |
 | `beit3_ckpt` | Path to BeiT-3 checkpoint |
 | `spm_model` | Path to BeiT-3 tokenizer model |
 | `output_dir` | Checkpoint output directory |
