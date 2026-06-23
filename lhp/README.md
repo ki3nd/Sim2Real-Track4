@@ -6,7 +6,7 @@ The **LHP (Local-global Hybrid Perspective)** retriever is a BeiT-3 base/384 ima
 - **LHP crop augmentation**: Stochastic local (random-resized-crop) and global (full-image resize) views
 - **Contrastive loss**: ClipLoss over in-batch negatives (no hard sampling per challenge rules)
 
-This module serves as a **stage-1 retriever** in the two-stage retrieval pipeline; retrieved results feed into a later reranking step (out of scope here).
+This module serves as a **stage-1 retriever** in the two-stage retrieval pipeline; retrieved results can be reranked by CMP's pose-aware cross-encoder via `lhp.rerank_eval`.
 
 ## Prerequisites
 
@@ -69,6 +69,39 @@ The R@1 / mAP delta between the two runs is the LHP improvement.
 - `--kind lhp`: load a trained `lhp_epoch*.pth` (`{"model": ...}` wrapper checkpoint).
 - Test set: `test_file` in `lhp/config.yaml` (relative to `data_root`), CMP format — each record `{image, image_id, caption: [list]}`; match query↔gallery by `image_id`. Test images resolve as `data_root + ann["image"]`.
 - Eval uses a deterministic global-only view (no LHP local crop).
+
+## Two-Stage Rerank Evaluation
+
+Run LHP as the stage-1 retriever, then rerank each query's top-k candidates with the trained CMP pose-aware cross-encoder. This reports the final R@1/R@5/R@10, mAP, and mINP using CMP's existing `evaluation_itc`, `evaluation_itm`, and `mAP` code.
+
+```bash
+CUDA_VISIBLE_DEVICES=0 .venv/bin/python -m lhp.rerank_eval \
+    --lhp-config lhp/config.yaml \
+    --lhp-checkpoint output/lhp/lhp_epoch2.pth \
+    --lhp-kind lhp \
+    --cmp-config configs/cmp.yaml \
+    --cmp-checkpoint path/to/cmp_pose_nohard_checkpoint.pth
+```
+
+For a zero-shot BeiT-3 stage-1 baseline, switch the LHP checkpoint and kind:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 .venv/bin/python -m lhp.rerank_eval \
+    --lhp-config lhp/config.yaml \
+    --lhp-checkpoint checkpoint/beit3_base_patch16_384_coco_retrieval.pth \
+    --lhp-kind beit3 \
+    --cmp-config configs/cmp.yaml \
+    --cmp-checkpoint path/to/cmp_pose_nohard_checkpoint.pth
+```
+
+Prerequisites:
+- Single GPU with both CMP and LHP dependencies installed.
+- `timm==0.4.12` is supported; CMP's Swin import falls back to `timm.models.layers` for this BeiT-3-compatible version.
+- `transformers` 4.x with `sentencepiece` installed for `XLMRobertaTokenizer("checkpoint/beit3.spm")`.
+- A trained CMP checkpoint matching `configs/cmp.yaml`; it should be pose-aware and no-hard for this rerank setup.
+- PAB test images and pose images must be available under CMP's `image_root`; pose paths are resolved as `pose/<ann["image"]>`.
+
+Important alignment detail: `lhp.rerank_eval` drives both stages from the same CMP `search_test_dataset`, so gallery/query ordering is shared by index. The LHP similarity matrix is guarded to be `[N_query, N_gallery]` before CMP reranking.
 
 ## Configuration
 
