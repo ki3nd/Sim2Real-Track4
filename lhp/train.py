@@ -36,7 +36,7 @@ def main():
 
     tokenizer = XLMRobertaTokenizer(cfg["spm_model"])
     transform = LHPTransform(cfg["resolution"], tuple(cfg["crop_scale"]),
-                             cfg["local_prob"], cfg["masked_prob"])
+                             cfg["local_prob"], cfg.get("masked_prob", 0.0))
     data_root = cfg["data_root"]
     ann_files = [os.path.join(data_root, f) for f in cfg["train_file"]]
     dataset = LHPDataset(ann_files, data_root, transform,
