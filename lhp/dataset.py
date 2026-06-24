@@ -27,9 +27,9 @@ class LHPDataset(Dataset):
             image_path = image_path.replace(".jpg", ".webp")
             try:
                 image = Image.open(image_path).convert("RGB")
-                image, _view = self.transform(image)
+                image, _view, patch_mask = self.transform(image)
                 caption = pre_caption(ann["caption"], self.max_words, self.eda, self.eda_p)
-                return image, caption, ann["image"]
+                return image, caption, ann["image"], patch_mask
             except Exception:
                 index = random.randint(0, len(self.ann) - 1)
         raise RuntimeError("LHPDataset: no loadable images found in dataset")
