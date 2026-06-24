@@ -1,3 +1,4 @@
+import math
 import random
 import torch
 from torchvision import transforms
@@ -31,8 +32,9 @@ class LHPTransform:
     def _make_patch_mask(self, masked):
         patch_mask = torch.zeros(self.num_patches, dtype=torch.bool)
         if masked:
-            ratio = random.uniform(*self.mask_ratio_range)
-            n_mask = int(round(self.num_patches * ratio))
+            lo, hi = self.mask_ratio_range
+            n_mask = random.randint(math.ceil(lo * self.num_patches),
+                                    math.floor(hi * self.num_patches))
             idx = torch.randperm(self.num_patches)[:n_mask]
             patch_mask[idx] = True
         return patch_mask
