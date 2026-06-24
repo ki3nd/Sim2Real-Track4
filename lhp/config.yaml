@@ -80,7 +80,8 @@ batch_size_eval: 64
 
 resolution: 384
 crop_scale: [0.5, 0.8]
-local_prob: 0.5
+local_prob: 0.3333
+masked_prob: 0.3333
 
 eda: true
 eda_p: 0.5

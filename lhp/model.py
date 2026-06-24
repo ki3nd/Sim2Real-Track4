@@ -12,9 +12,10 @@ class LHPRetriever(nn.Module):
         if ckpt_path:
             load_pretrained(self.beit3, ckpt_path)
 
-    def forward(self, image, text_ids, padding_mask):
+    def forward(self, image, text_ids, padding_mask, vision_padding_mask=None):
         # BEiT3ForRetrieval computes ClipLoss internally over in-batch (gathered) negatives
-        return self.beit3(image=image, text_description=text_ids, padding_mask=padding_mask)
+        return self.beit3(image=image, text_description=text_ids, padding_mask=padding_mask,
+                          vision_padding_mask=vision_padding_mask)
 
     @torch.no_grad()
     def encode_image(self, image):

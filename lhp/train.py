@@ -13,6 +13,7 @@ from lhp.transform import LHPTransform
 from lhp.dataset import LHPDataset
 from lhp.model import LHPRetriever
 from lhp.tokenization import tokenize_caption
+from lhp.masked_model import build_vision_padding_mask
 
 
 def setup_ddp():
@@ -34,7 +35,8 @@ def main():
     os.makedirs(cfg["output_dir"], exist_ok=True)
 
     tokenizer = XLMRobertaTokenizer(cfg["spm_model"])
-    transform = LHPTransform(cfg["resolution"], tuple(cfg["crop_scale"]), cfg["local_prob"])
+    transform = LHPTransform(cfg["resolution"], tuple(cfg["crop_scale"]),
+                             cfg["local_prob"], cfg.get("masked_prob", 0.0))
     data_root = cfg["data_root"]
     ann_files = [os.path.join(data_root, f) for f in cfg["train_file"]]
     dataset = LHPDataset(ann_files, data_root, transform,
@@ -58,14 +60,15 @@ def main():
     for epoch in range(cfg["epochs"]):
         sampler.set_epoch(epoch)
         model.train()
-        for i, (image, captions, _path) in enumerate(loader):
+        for i, (image, captions, _path, patch_mask) in enumerate(loader):
             image = image.to(device, non_blocking=True)
+            vision_padding_mask = build_vision_padding_mask(patch_mask.to(device))  # [B, 1+num_patches]
             toks = [tokenize_caption(tokenizer, c, cfg["max_tokens"]) for c in captions]
             text_ids = torch.tensor([t[0] for t in toks], device=device)
             padding_mask = torch.tensor([t[1] for t in toks], device=device)
 
             with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                loss, _, _ = model(image, text_ids, padding_mask)
+                loss, _, _ = model(image, text_ids, padding_mask, vision_padding_mask)
 
             optimizer.zero_grad()
             loss.backward()
