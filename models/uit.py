@@ -1,6 +1,38 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributed as dist
+
+
+class AllGather(torch.autograd.Function):
+    """Differentiable all-gather: forward gathers across ranks, backward returns this
+    rank's slice of the gradient (so grads flow to local features)."""
+    @staticmethod
+    def forward(ctx, tensor, rank, world_size):
+        output = [torch.empty_like(tensor) for _ in range(world_size)]
+        dist.all_gather(output, tensor)
+        ctx.rank, ctx.batch_size = rank, tensor.shape[0]
+        return torch.cat(output, 0)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return (grad_output[ctx.batch_size * ctx.rank: ctx.batch_size * (ctx.rank + 1)], None, None)
+
+
+def contrastive_loss(img_feat, txt_feat, temp):
+    """Symmetric in-batch CE. When distributed (world_size>1), gather features across
+    ranks (differentiable) so negatives span the global batch; else local in-batch."""
+    if dist.is_available() and dist.is_initialized() and dist.get_world_size() > 1:
+        rank, world = dist.get_rank(), dist.get_world_size()
+        img_all = AllGather.apply(img_feat, rank, world)
+        txt_all = AllGather.apply(txt_feat, rank, world)
+        logits_i = img_feat @ txt_all.t() / temp
+        logits_t = txt_feat @ img_all.t() / temp
+        labels = torch.arange(img_feat.size(0), device=img_feat.device) + rank * img_feat.size(0)
+        return (F.cross_entropy(logits_i, labels) + F.cross_entropy(logits_t, labels)) / 2
+    logits = img_feat @ txt_feat.t() / temp
+    labels = torch.arange(logits.size(0), device=logits.device)
+    return (F.cross_entropy(logits, labels) + F.cross_entropy(logits.t(), labels)) / 2
 
 
 class MIMDecoder(nn.Module):
@@ -79,9 +111,7 @@ class UIT(nn.Module):
     def itc(self, img_cls, txt_cls):
         i = F.normalize(self.vision_proj(img_cls), dim=-1)
         t = F.normalize(self.text_proj(txt_cls), dim=-1)
-        logits = i @ t.t() / self.temp
-        labels = torch.arange(logits.size(0), device=logits.device)
-        return (F.cross_entropy(logits, labels) + F.cross_entropy(logits.t(), labels)) / 2
+        return contrastive_loss(i, t, self.temp)
 
     def itm(self, image_embeds, image_atts, text_embeds, text_atts):
         bs = image_embeds.size(0)
