@@ -92,8 +92,9 @@ class UIT(nn.Module):
             w_t2i = F.softmax(t @ i.t() / self.temp, dim=1) + 1e-5
             w_i2t.fill_diagonal_(0); w_t2i.fill_diagonal_(0)
         neg_img = torch.stack([image_embeds[torch.multinomial(w_t2i[b], 1).item()] for b in range(bs)])
-        neg_txt = torch.stack([text_embeds[torch.multinomial(w_i2t[b], 1).item()] for b in range(bs)])
-        neg_txt_atts = torch.stack([text_atts[torch.multinomial(w_i2t[b], 1).item()] for b in range(bs)])
+        neg_txt_idx = [torch.multinomial(w_i2t[b], 1).item() for b in range(bs)]
+        neg_txt = torch.stack([text_embeds[j] for j in neg_txt_idx])
+        neg_txt_atts = torch.stack([text_atts[j] for j in neg_txt_idx])
         img_all = torch.cat([image_embeds, image_embeds, neg_img], dim=0)
         txt_all = torch.cat([text_embeds, neg_txt, text_embeds], dim=0)
         atts_all = torch.cat([text_atts, neg_txt_atts, text_atts], dim=0)
