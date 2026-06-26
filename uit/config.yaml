@@ -1,0 +1,28 @@
+image_root: 'data/PAB'
+train_file:
+  - 'data/PAB/annotation/train/imgs_0.json'
+  # ... imgs_1.json ... imgs_74.json (the PAB train shards, as in lhp/config.yaml but BERT/UIT)
+swin: { img_size: 224, patch_size: 4, embed_dim: 128, depths: [2,2,18,2], num_heads: [4,8,16,32], window_size: 7, drop_path_rate: 0.1 }
+text_config: 'configs/config_bert.json'
+text_encoder: 'checkpoint/bert-base-uncased'
+xvlm_ckpt: 'checkpoint/16m_base_model_state_step_199999.th'
+embed_dim: 256
+temp: 0.07
+max_words: 56
+max_tokens: 56
+max_masks: 10
+mask_prob: 0.25
+skipgram_prb: 0.2
+skipgram_size: 3
+mask_whole_word: true
+mim_mask_patch_size: 32
+mim_mask_ratio: 0.6
+mim_alpha: 0.1356
+be_pose_img: false
+be_hard: false
+eda_p: 0.0
+batch_size: 84
+lr: 1.0e-5
+epochs: 22
+weight_decay: 0.01
+output_dir: 'output/uit'

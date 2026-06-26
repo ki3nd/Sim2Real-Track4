@@ -137,6 +137,7 @@ class search_train_dataset(Dataset):
     def __getitem__(self, index):
         ann = self.ann[index]
         image_path = os.path.join(self.image_root, ann['image'])
+        image_path = image_path.replace(".jpg", ".webp")
         image = Image.open(image_path).convert('RGB')
         image = self.transform(image)
 
