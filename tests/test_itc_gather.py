@@ -13,5 +13,4 @@ def test_contrastive_loss_single_process_equals_symmetric_ce():
     labels = torch.arange(4)
     expected = (F.cross_entropy(logits, labels) + F.cross_entropy(logits.t(), labels)) / 2
     assert torch.allclose(got, expected, atol=1e-6)
-    got.backward if False else None  # smoke: it is differentiable
     contrastive_loss(i.requires_grad_(), t.requires_grad_(), temp).backward()
