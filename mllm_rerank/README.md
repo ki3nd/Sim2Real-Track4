@@ -25,3 +25,23 @@ similarity to 1.0. This module instead follows the **paper** (Eq. 2-4): it score
 each candidate by the cosine between the original query and the Writer's
 **generated caption**. All SSDC logic here is **ported (copied)** into this
 package — nothing is imported from `open-sources/SSDC`.
+
+## CGCR — Claim-Grounded Comparative Rerank (alternative reranker)
+
+A second, zero-shot reranker that improves on the SSDC Stage-2 idea. For each
+query it decomposes the text into weighted atomic claims, verifies each claim
+against each candidate image (graded signed entailment, self-consistency), runs a
+targeted Critic on suspect claims, gates on Stage-1 ambiguity, and adaptively
+deepens top-k when nothing matches. Score = weighted signed entailment, fused
+with the structural score. (A listwise Adjudicator tie-break is designed but
+deferred — it needs a multi-image MLLM wrapper.)
+
+```bash
+# edit mllm_rerank/cgcr_config.yaml paths first
+bash mllm_rerank/run_cgcr.sh
+```
+
+CGCR does not replace `rerank.py`; both reuse the same `cmp_features.pt` Stage-1
+cache so they can be compared on identical inputs. See
+`docs/superpowers/specs/2026-06-28-cgcr-rerank-design.md` for strengths,
+weaknesses, and the full SSDC comparison.
