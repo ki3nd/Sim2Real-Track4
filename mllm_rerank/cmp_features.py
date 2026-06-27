@@ -46,7 +46,9 @@ def extract_cmp_features(model, data_loader, tokenizer, device, config):
         image_embed, _ = model.get_vision_embeds(image)
         if config.get('be_pose_img', False) and pose is not None:
             pose = pose.to(device)
-            pose_embed, _ = model.get_vision_embeds(model.pose_conv(pose))
+            if model.be_pose_conv:
+                pose = model.pose_conv(pose)
+            pose_embed, _ = model.get_vision_embeds(pose)
             image_embed = model.pose_block(image_embed, pose_embed)
         image_feat = model.get_image_feat(image_embed)
         image_embeds_list.append(image_embed.cpu())

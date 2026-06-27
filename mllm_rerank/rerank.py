@@ -48,7 +48,6 @@ def main():
         c = torch.load(cache)
         s_str = c["s_str"]; img_paths = c["img_paths"]; texts = c["texts"]
         qids = c["q_pids"]; pids = c["g_pids"]
-        text_embeds_meta = None
         cmp_config = c["cmp_config"]
     else:
         from dataset import create_dataset, create_loader
@@ -75,7 +74,7 @@ def main():
     topk_idx, gate_mask = build_topk_and_gate(s_str, cfg["top_k"], cfg["xi"])
     cand_img_paths = [[img_paths[int(topk_idx[i, j])] for j in range(topk_idx.size(1))]
                       for i in range(topk_idx.size(0))]
-    # load PIL images lazily inside run_squad's batches: pass paths, convert there
+    # images for gated queries are pre-loaded here (eagerly) before the squad runs
     cand_imgs = [[load_image(p) for p in row] if gate_mask[i] else []
                  for i, row in enumerate(cand_img_paths)]
 
