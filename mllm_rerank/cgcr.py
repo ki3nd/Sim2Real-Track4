@@ -1,7 +1,6 @@
-"""CGCR entry: Stage-1 -> ambiguity gate -> decompose -> recovery verify -> critic -> fuse -> adjudicate -> metrics."""
+"""CGCR entry: Stage-1 -> ambiguity gate -> decompose -> recovery verify -> critic -> fuse -> metrics."""
 import os
 import gc
-import json
 import time
 import argparse
 import torch
