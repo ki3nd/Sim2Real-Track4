@@ -1,0 +1,19 @@
+# --- Stage-1 CMP (repo Search model) ---
+cmp_config: 'configs/PAB.yaml'              # EDIT: path to the trained CMP stage-1 yaml
+cmp_checkpoint: 'output/cmp/best.pth'        # EDIT: path to the trained CMP checkpoint
+
+# --- MLLM (Qwen3-VL-8B-Instruct, zero-shot) ---
+model_dir: 'checkpoint/Qwen3-VL-8B-Instruct' # EDIT: local path to the MLLM weights
+gpu_memory_utilization: 0.7
+max_model_len: 1536
+image_micro_batch: 8
+text_micro_batch: 16
+temperature: 0.01
+
+# --- Rerank ---
+top_k: 10
+xi: 0.1
+lambda: 0.4
+max_tokens_text: 56
+
+out_dir: 'output/mllm_rerank'
