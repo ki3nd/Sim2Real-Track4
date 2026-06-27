@@ -1,0 +1,35 @@
+# Stage-1 (shared with rerank.py)
+cmp_config: 'configs/cmp.yaml'              # EDIT: trained CMP stage-1 yaml
+cmp_checkpoint: 'output/cmp/best.pth'        # EDIT: trained CMP checkpoint
+model_dir: 'checkpoint/Qwen3-VL-8B-Instruct' # EDIT: local MLLM weights
+# vLLM
+gpu_memory_utilization: 0.7
+max_model_len: 1536
+image_micro_batch: 8
+text_micro_batch: 16
+# Decomposer category -> weight (deterministic; MLLM only assigns category)
+category_weights:
+  action: 1.5
+  anomaly: 1.5
+  upper: 1.0
+  lower: 1.0
+  gender: 0.8
+  accessory: 0.6
+  hair: 0.5
+  background: 0.3
+default_weight: 0.7
+# Verifier
+n_samples: 3
+verifier_temperature: 0.6
+critic_conf_floor: 0.5
+# Gate + recall recovery
+gate_margin: 0.05
+k0: 5
+k_step: 5
+k_max: 20
+hit_theta: 0.6
+max_rounds: 2
+# Fusion + tie-break
+lambda: 0.4
+tie_margin: 0.03
+out_dir: 'output/cgcr'
